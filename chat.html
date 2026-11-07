@@ -10,23 +10,96 @@
   <h1>DAPI 1.0</h1>
 
   <div>
-    <input type="text" id="userInput" placeholder="输入用户说的话……" size="40">
-    <button id="sendButton">send</button>
+    <select id="langSelect">
+      <option value="zh">中文</option>
+      <option value="en">English</option>
+      <option value="ja">日本語</option>
+      <option value="ko">한국어</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+      <option value="es">Español</option>
+      <option value="ru">Русский</option>
+    </select>
+    <input type="text" id="userInput" size="40">
+    <button id="sendButton"></button>
   </div>
 
   <div id="resultBox" style="margin-top:1.5rem;"></div>
 
   <script>
     (function() {
+      const i18n = {
+        zh: {
+          placeholder: '输入用户说的话……',
+          send: '发送',
+          noSkill: '没有这个技能，你可以找作者。',
+          empty: ''
+        },
+        en: {
+          placeholder: 'Type what the user says...',
+          send: 'Send',
+          noSkill: 'No such skill, you can contact the author.',
+          empty: ''
+        },
+        ja: {
+          placeholder: 'ユーザーの発言を入力……',
+          send: '送信',
+          noSkill: 'そのスキルはありません。作者に連絡してください。',
+          empty: ''
+        },
+        ko: {
+          placeholder: '사용자 말을 입력하세요……',
+          send: '보내기',
+          noSkill: '해당 스킬이 없습니다. 작성자에게 문의하세요.',
+          empty: ''
+        },
+        fr: {
+          placeholder: "Entrez ce que dit l'utilisateur……",
+          send: 'Envoyer',
+          noSkill: "Cette compétence n'existe pas, contactez l'auteur.",
+          empty: ''
+        },
+        de: {
+          placeholder: 'Benutzereingabe eingeben……',
+          send: 'Senden',
+          noSkill: 'Diese Fähigkeit gibt es nicht, wende dich an den Autor.',
+          empty: ''
+        },
+        es: {
+          placeholder: 'Escribe lo que dice el usuario……',
+          send: 'Enviar',
+          noSkill: 'No existe esa habilidad, contacta al autor.',
+          empty: ''
+        },
+        ru: {
+          placeholder: 'Введите слова пользователя……',
+          send: 'Отправить',
+          noSkill: 'Такого навыка нет, обратитесь к автору.',
+          empty: ''
+        }
+      };
+
       const inputField = document.getElementById('userInput');
       const sendBtn = document.getElementById('sendButton');
       const resultBox = document.getElementById('resultBox');
+      const langSelect = document.getElementById('langSelect');
+
+      function getLang() {
+        return i18n[langSelect.value] || i18n.zh;
+      }
+
+      function applyLang() {
+        const lang = getLang();
+        inputField.placeholder = lang.placeholder;
+        sendBtn.textContent = lang.send;
+      }
 
       function handleSend() {
         const rawInput = inputField.value.trim();
+        const lang = getLang();
 
         if (rawInput === '') {
-          resultBox.textContent = '';
+          resultBox.textContent = lang.empty;
           return;
         }
 
@@ -46,7 +119,7 @@
             resultBox.textContent = data.chat;
           })
           .catch(function() {
-            resultBox.textContent = rawInput;
+            resultBox.textContent = lang.noSkill;
           });
       }
 
@@ -58,6 +131,10 @@
           handleSend();
         }
       });
+
+      langSelect.addEventListener('change', applyLang);
+
+      applyLang();
     })();
   </script>
 
