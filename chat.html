@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAPI 1.0</title>
+</head>
+<body>
+
+  <h1>DAPI 1.0</h1>
+
+  <div>
+    <input type="text" id="userInput" placeholder="输入用户说的话……" size="40">
+    <button id="sendButton">send</button>
+  </div>
+
+  <pre id="resultBox" style="margin-top:1.5rem; background:#f4f4f4; padding:0.5rem; border:1px solid #ccc; min-height:3rem; white-space:pre-wrap;"></pre>
+
+  <script>
+    (function() {
+      const inputField = document.getElementById('userInput');
+      const sendBtn = document.getElementById('sendButton');
+      const resultBox = document.getElementById('resultBox');
+
+      function buildJsonPath(userText) {
+        const safeSegment = encodeURIComponent(userText);
+        return 'program/chat/' + safeSegment + '.json';
+      }
+
+      function handleSend() {
+        const rawInput = inputField.value.trim();
+
+        if (rawInput === '') {
+          resultBox.textContent = '⚠️ 请输入内容后再发送。';
+          return;
+        }
+
+        const jsonPath = buildJsonPath(rawInput);
+        resultBox.textContent = '⏳ 正在检测: ' + jsonPath + ' ...';
+
+        fetch(jsonPath)
+          .then(function(response) {
+            if (!response.ok) {
+              throw new Error('HTTP ' + response.status);
+            }
+            return response.json();
+          })
+          .then(function(data) {
+            if (!data || typeof data !== 'object') {
+              throw new Error('返回的JSON不是有效对象');
+            }
+            if (!('chat' in data)) {
+              throw new Error('JSON中缺少 "chat" 字段');
+            }
+
+            const chatValue = data.chat;
+            let displayContent;
+            if (typeof chatValue === 'string') {
+              displayContent = chatValue;
+            } else {
+              try {
+                displayContent = JSON.stringify(chatValue, null, 2);
+              } catch (e) {
+                displayContent = String(chatValue);
+              }
+            }
+
+            resultBox.textContent = '✅ 检测成功！\n文件: ' + jsonPath + '\nchat 内容:\n' + displayContent;
+          })
+          .catch(function(error) {
+            console.error('检测失败:', error);
+            if (error.message.indexOf('HTTP 404') !== -1) {
+              resultBox.textContent = '❌ 文件不存在: ' + jsonPath + '\n(请确认路径及文件名是否正确)';
+            } else if (error.message.indexOf('JSON') !== -1) {
+              resultBox.textContent = '❌ 无法解析JSON文件: ' + jsonPath + '\n可能文件内容不是合法JSON。';
+            } else if (error.message.indexOf('缺少 "chat"') !== -1) {
+              resultBox.textContent = '❌ JSON中缺少 "chat" 字段: ' + jsonPath;
+            } else {
+              resultBox.textContent = '❌ 检测失败: ' + error.message;
+            }
+          });
+      }
+
+      sendBtn.addEventListener('click', handleSend);
+
+      inputField.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          handleSend();
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>
